@@ -1,0 +1,2 @@
+before
+python-exe=C:\ExpenseTracker\expense_tracker\venv\Scripts\python.exe
