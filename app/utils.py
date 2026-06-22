@@ -1,20 +1,23 @@
-from passlib.context import CryptContext
-
-pwd_context = CryptContext(
-    schemes=["bcrypt"],
-    deprecated="auto"
-)
+import bcrypt
 
 
 def hash_password(password: str):
-    return pwd_context.hash(password)
+    password = str(password).strip()
+
+    print("PASSWORD =", password)
+    print("LENGTH =", len(password))
+
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt()).decode("utf-8")
 
 
 def verify_password(
-    plain_password,
-    hashed_password
+    plain_password: str,
+    hashed_password: str
 ):
-    return pwd_context.verify(
-        plain_password,
-        hashed_password
-    )
+    try:
+        return bcrypt.checkpw(
+            plain_password.encode("utf-8"),
+            hashed_password.encode("utf-8")
+        )
+    except Exception:
+        return False

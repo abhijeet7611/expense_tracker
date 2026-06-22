@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 
-from app.dependencies import get_db
+from app.dependencies import get_db, get_current_user
 from app import models, schemas
 
 router = APIRouter(
@@ -18,13 +18,14 @@ router = APIRouter(
 )
 def create_budget(
     budget: schemas.BudgetCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: int = Depends(get_current_user)
 ):
     new_budget = models.Budget(
         month=budget.month,
         year=budget.year,
         amount=budget.amount,
-        user_id=1
+        user_id=current_user
     )
 
     db.add(new_budget)
@@ -40,19 +41,22 @@ def create_budget(
     response_model=list[schemas.BudgetResponse]
 )
 def get_budgets(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: int = Depends(get_current_user)
 ):
-    budgets = db.query(models.Budget).all()
+    budgets = db.query(models.Budget).filter(models.Budget.user_id == current_user).all()
     return budgets
 
 
 # Remaining Budget Calculator
 @router.get("/remaining")
 def remaining_budget(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: int = Depends(get_current_user)
 ):
     latest_budget = (
         db.query(models.Budget)
+        .filter(models.Budget.user_id == current_user)
         .order_by(models.Budget.id.desc())
         .first()
     )
@@ -66,6 +70,7 @@ def remaining_budget(
         db.query(
             func.sum(models.Expense.amount)
         )
+        .filter(models.Expense.user_id == current_user)
         .scalar()
     )
 
@@ -85,10 +90,12 @@ def remaining_budget(
 # Dashboard Summary
 @router.get("/dashboard")
 def dashboard_summary(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: int = Depends(get_current_user)
 ):
     latest_budget = (
         db.query(models.Budget)
+        .filter(models.Budget.user_id == current_user)
         .order_by(models.Budget.id.desc())
         .first()
     )
@@ -103,6 +110,7 @@ def dashboard_summary(
         db.query(
             func.sum(models.Expense.amount)
         )
+        .filter(models.Expense.user_id == current_user)
         .scalar()
     )
 
@@ -110,6 +118,7 @@ def dashboard_summary(
 
     total_expenses = (
         db.query(models.Expense)
+        .filter(models.Expense.user_id == current_user)
         .count()
     )
 
@@ -128,10 +137,12 @@ def dashboard_summary(
 # Advanced Dashboard Analytics
 @router.get("/analytics")
 def analytics_dashboard(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: int = Depends(get_current_user)
 ):
     latest_budget = (
         db.query(models.Budget)
+        .filter(models.Budget.user_id == current_user)
         .order_by(models.Budget.id.desc())
         .first()
     )
@@ -146,6 +157,7 @@ def analytics_dashboard(
         db.query(
             func.sum(models.Expense.amount)
         )
+        .filter(models.Expense.user_id == current_user)
         .scalar()
     )
 
@@ -153,6 +165,7 @@ def analytics_dashboard(
 
     expense_count = (
         db.query(models.Expense)
+        .filter(models.Expense.user_id == current_user)
         .count()
     )
 
@@ -161,6 +174,7 @@ def analytics_dashboard(
             models.Expense.category,
             func.sum(models.Expense.amount).label("total")
         )
+        .filter(models.Expense.user_id == current_user)
         .group_by(models.Expense.category)
         .order_by(func.sum(models.Expense.amount).desc())
         .first()

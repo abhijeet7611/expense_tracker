@@ -70,11 +70,15 @@ def get_expenses(
 )
 def get_expense(
     expense_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: int = Depends(get_current_user)
 ):
     expense = (
         db.query(models.Expense)
-        .filter(models.Expense.id == expense_id)
+        .filter(
+            models.Expense.id == expense_id,
+            models.Expense.user_id == current_user
+        )
         .first()
     )
 
@@ -95,11 +99,15 @@ def get_expense(
 def update_expense(
     expense_id: int,
     updated_expense: schemas.ExpenseCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: int = Depends(get_current_user)
 ):
     expense = (
         db.query(models.Expense)
-        .filter(models.Expense.id == expense_id)
+        .filter(
+            models.Expense.id == expense_id,
+            models.Expense.user_id == current_user
+        )
         .first()
     )
 
@@ -125,11 +133,15 @@ def update_expense(
 @router.delete("/{expense_id}")
 def delete_expense(
     expense_id: int,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: int = Depends(get_current_user)
 ):
     expense = (
         db.query(models.Expense)
-        .filter(models.Expense.id == expense_id)
+        .filter(
+            models.Expense.id == expense_id,
+            models.Expense.user_id == current_user
+        )
         .first()
     )
 
@@ -150,13 +162,15 @@ def delete_expense(
 # Category Wise Report
 @router.get("/report/category")
 def category_report(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: int = Depends(get_current_user)
 ):
     report = (
         db.query(
             models.Expense.category,
             func.sum(models.Expense.amount).label("total")
         )
+        .filter(models.Expense.user_id == current_user)
         .group_by(models.Expense.category)
         .all()
     )
@@ -175,7 +189,8 @@ def category_report(
 # Monthly Expense Report
 @router.get("/report/monthly")
 def monthly_report(
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: int = Depends(get_current_user)
 ):
     report = (
         db.query(
@@ -187,6 +202,7 @@ def monthly_report(
                 models.Expense.amount
             ).label("total")
         )
+        .filter(models.Expense.user_id == current_user)
         .group_by("month")
         .order_by("month")
         .all()

@@ -1,0 +1,1638 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expense Tracker — Dashboard</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --bg-primary: #0b0c16;
+            --bg-glass: rgba(22, 25, 49, 0.45);
+            --bg-glass-hover: rgba(30, 34, 68, 0.6);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --text-primary: #f8fafc;
+            --text-secondary: #94a3b8;
+            --accent-glow: #8b5cf6;
+            --accent-glow-rgb: 139, 92, 246;
+            --accent-secondary: #06b6d4;
+            --accent-success: #10b981;
+            --accent-warning: #f59e0b;
+            --accent-danger: #ef4444;
+            --font-display: 'Outfit', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            --radius-lg: 16px;
+            --radius-md: 12px;
+            --transition-smooth: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-primary);
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(6, 182, 212, 0.12) 0%, transparent 40%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Glassmorphism utility */
+        .glass-panel {
+            background: var(--bg-glass);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-lg);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+            transition: var(--transition-smooth);
+        }
+
+        .glass-panel:hover {
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 12px 40px 0 rgba(139, 92, 246, 0.15);
+        }
+
+        /* Container Layout */
+        .container {
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 24px;
+        }
+
+        /* Auth Screen Styling */
+        #auth-screen {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 90vh;
+            flex: 1;
+        }
+
+        .auth-card {
+            width: 100%;
+            max-width: 440px;
+            padding: 40px;
+            position: relative;
+        }
+
+        .auth-logo {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .auth-logo h1 {
+            font-family: var(--font-display);
+            font-size: 2.2rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--text-primary) 30%, var(--accent-glow) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .auth-tab {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-family: var(--font-display);
+            font-size: 1.1rem;
+            font-weight: 600;
+            padding: 12px;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+            position: relative;
+            text-align: center;
+        }
+
+        .auth-tab.active {
+            color: var(--text-primary);
+        }
+
+        .auth-tab.active::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--accent-glow);
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        /* Forms inputs styling */
+        .form-group {
+            margin-bottom: 20px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-group label {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .form-input {
+            background: rgba(15, 17, 35, 0.6);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-md);
+            padding: 14px 16px;
+            color: var(--text-primary);
+            font-family: var(--font-body);
+            font-size: 1rem;
+            transition: var(--transition-smooth);
+            width: 100%;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--accent-glow);
+            box-shadow: 0 0 12px rgba(139, 92, 246, 0.3);
+            background: rgba(15, 17, 35, 0.8);
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-glow) 0%, #6d28d9 100%);
+            border: none;
+            border-radius: var(--radius-md);
+            color: white;
+            font-family: var(--font-display);
+            font-size: 1.05rem;
+            font-weight: 700;
+            padding: 15px;
+            width: 100%;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+            transition: var(--transition-smooth);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .auth-message {
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: var(--radius-md);
+            font-size: 0.9rem;
+            display: none;
+            text-align: center;
+        }
+
+        .message-success {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid var(--accent-success);
+            color: #34d399;
+        }
+
+        .message-danger {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid var(--accent-danger);
+            color: #f87171;
+        }
+
+        /* Dashboard Screen Styling */
+        #dashboard-screen {
+            display: none;
+            flex-direction: column;
+            gap: 24px;
+            padding-bottom: 60px;
+        }
+
+        /* Navigation Header */
+        .dashboard-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            margin-bottom: 12px;
+        }
+
+        .dashboard-brand h2 {
+            font-family: var(--font-display);
+            font-size: 1.6rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+
+        .dashboard-brand span {
+            color: var(--accent-glow);
+        }
+
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-info {
+            text-align: right;
+        }
+
+        .username-display {
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .email-display {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-glass);
+            border-radius: var(--radius-md);
+            color: var(--text-primary);
+            font-family: var(--font-display);
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 8px 16px;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Summary Grid */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 20px;
+        }
+
+        .metric-card {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .metric-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+        }
+
+        .card-budget::before { background: var(--accent-glow); }
+        .card-spent::before { background: var(--accent-warning); }
+        .card-remaining::before { background: var(--accent-success); }
+        .card-expenses::before { background: var(--accent-secondary); }
+        .card-score::before { background: linear-gradient(to bottom, var(--accent-glow), var(--accent-secondary)); }
+
+        .metric-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .metric-value {
+            font-family: var(--font-display);
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+
+        .progress-bar-container {
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 4px;
+            height: 6px;
+            width: 100%;
+            overflow: hidden;
+            margin-top: 8px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease-out;
+            width: 0%;
+        }
+
+        /* Analytics Grid */
+        .analytics-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 800px) {
+            .analytics-grid {
+                grid-template-columns: 1.2fr 0.8fr;
+            }
+        }
+
+        .chart-card {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            min-height: 320px;
+        }
+
+        .chart-title {
+            font-family: var(--font-display);
+            font-size: 1.15rem;
+            font-weight: 700;
+        }
+
+        .chart-container {
+            position: relative;
+            flex: 1;
+            width: 100%;
+            max-height: 280px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Details/Actions Grid */
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        @media (min-width: 900px) {
+            .details-grid {
+                grid-template-columns: 1.3fr 0.7fr;
+            }
+        }
+
+        .section-card {
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .section-title {
+            font-family: var(--font-display);
+            font-size: 1.2rem;
+            font-weight: 700;
+        }
+
+        /* Tables */
+        .table-responsive {
+            overflow-x: auto;
+            border-radius: var(--radius-md);
+            background: rgba(15, 17, 35, 0.3);
+            border: 1px solid var(--border-glass);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.95rem;
+        }
+
+        th {
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--text-secondary);
+            font-weight: 600;
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-glass);
+            text-transform: uppercase;
+            font-size: 0.75rem;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 14px 16px;
+            border-bottom: 1px solid var(--border-glass);
+            color: var(--text-primary);
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover td {
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+
+        .badge-category {
+            background: rgba(139, 92, 246, 0.15);
+            color: #c084fc;
+            border: 1px solid rgba(139, 92, 246, 0.3);
+        }
+
+        .btn-delete {
+            background: none;
+            border: none;
+            color: var(--accent-danger);
+            cursor: pointer;
+            font-weight: 600;
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: var(--transition-smooth);
+            font-size: 0.85rem;
+        }
+
+        .btn-delete:hover {
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        /* Budget / Add Expense forms inside cards */
+        .card-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .form-row .form-group {
+            flex: 1;
+        }
+
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(5, 6, 12, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            backdrop-filter: blur(8px);
+        }
+
+        .modal-content {
+            width: 100%;
+            max-width: 500px;
+            padding: 30px;
+            position: relative;
+            animation: modalSlideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                transform: translateY(30px);
+                opacity: 0;
+            }
+            to {
+                transform: translateY(0);
+                opacity: 1;
+            }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            transition: var(--transition-smooth);
+        }
+
+        .modal-close:hover {
+            color: var(--text-primary);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--text-secondary);
+        }
+
+        .empty-state-icon {
+            font-size: 2.5rem;
+            margin-bottom: 12px;
+            opacity: 0.5;
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            padding: 16px 24px;
+            border-radius: var(--radius-md);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 2000;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.5);
+            transform: translateY(100px);
+            opacity: 0;
+            transition: var(--transition-smooth);
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast-success {
+            background: var(--accent-success);
+            color: white;
+        }
+
+        .toast-error {
+            background: var(--accent-danger);
+            color: white;
+        }
+
+        .hub-panel {
+            animation: fadeIn 0.4s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Auth Screen -->
+        <div id="auth-screen">
+            <div class="auth-card glass-panel">
+                <div class="auth-logo">
+                    <h1>ExpenseTracker</h1>
+                </div>
+                <div class="auth-tabs">
+                    <button class="auth-tab active" onclick="switchAuthTab('login')">Sign In</button>
+                    <button class="auth-tab" onclick="switchAuthTab('register')">Sign Up</button>
+                </div>
+
+                <!-- Login Form -->
+                <form id="login-form" class="auth-form" onsubmit="handleLogin(event)">
+                    <div class="form-group">
+                        <label for="login-email">Email Address</label>
+                        <input type="email" id="login-email" class="form-input" placeholder="you@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="login-password">Password</label>
+                        <input type="password" id="login-password" class="form-input" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="btn-primary">
+                        Sign In
+                    </button>
+                </form>
+
+                <!-- Register Form -->
+                <form id="register-form" class="auth-form" style="display: none;" onsubmit="handleRegister(event)">
+                    <div class="form-group">
+                        <label for="reg-username">Username</label>
+                        <input type="text" id="reg-username" class="form-input" placeholder="cooluser" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-email">Email Address</label>
+                        <input type="email" id="reg-email" class="form-input" placeholder="you@example.com" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="reg-password">Password</label>
+                        <input type="password" id="reg-password" class="form-input" placeholder="••••••••" required>
+                    </div>
+                    <button type="submit" class="btn-primary">
+                        Sign Up
+                    </button>
+                </form>
+
+                <div id="auth-message" class="auth-message"></div>
+            </div>
+        </div>
+
+        <!-- Dashboard Screen -->
+        <div id="dashboard-screen">
+            <!-- Header -->
+            <div class="dashboard-header glass-panel">
+                <div class="dashboard-brand">
+                    <h2>Expense<span>Tracker</span></h2>
+                </div>
+                <div class="user-profile">
+                    <div class="user-info">
+                        <div class="username-display" id="user-display-name">Username</div>
+                        <div class="email-display" id="user-display-email">email@example.com</div>
+                    </div>
+                    <button class="btn-secondary" onclick="handleLogout()">Sign Out</button>
+                </div>
+            </div>
+
+            <!-- Metrics -->
+            <div class="summary-grid">
+                <div class="metric-card glass-panel card-budget">
+                    <div class="metric-header">
+                        <span>Total Budget</span>
+                        <span>Monthly</span>
+                    </div>
+                    <div class="metric-value" id="val-budget">$0.00</div>
+                </div>
+                <div class="metric-card glass-panel card-spent">
+                    <div class="metric-header">
+                        <span>Total Spent</span>
+                        <span>This Month</span>
+                    </div>
+                    <div class="metric-value" id="val-spent">$0.00</div>
+                </div>
+                <div class="metric-card glass-panel card-remaining">
+                    <div class="metric-header">
+                        <span>Remaining</span>
+                        <span id="label-remaining-percent">0% Left</span>
+                    </div>
+                    <div class="metric-value" id="val-remaining">$0.00</div>
+                    <div class="progress-bar-container">
+                        <div id="progress-remaining" class="progress-bar" style="background: var(--accent-success);"></div>
+                    </div>
+                </div>
+                <div class="metric-card glass-panel card-expenses">
+                    <div class="metric-header">
+                        <span>Transaction Count</span>
+                        <span>Total</span>
+                    </div>
+                    <div class="metric-value" id="val-count">0</div>
+                </div>
+                <!-- Score Card -->
+                <div class="metric-card glass-panel card-score">
+                    <div class="metric-header">
+                        <span>Financial Control Score</span>
+                        <span id="label-score-status" class="badge">In Control</span>
+                    </div>
+                    <div class="metric-value" id="val-score">100/100</div>
+                    <div style="font-size: 0.8rem; color: var(--text-secondary);" id="val-score-desc">Set a budget and add expenses to calculate your score.</div>
+                </div>
+            </div>
+
+            <!-- Charts and budget projection -->
+            <div class="analytics-grid">
+                <div class="chart-card glass-panel">
+                    <div class="chart-title">Spending Analytics</div>
+                    <div class="chart-container">
+                        <canvas id="categoryChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-card glass-panel">
+                    <div class="chart-title">50/30/20 Target Split & Projection</div>
+                    <div style="display: flex; flex-direction: column; gap: 14px; margin-top: 10px;">
+                        <!-- 50% Needs -->
+                        <div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;">
+                                <span>Needs (50% Target - Utilities, Food, Rent)</span>
+                                <span id="txt-needs-actual" style="font-weight: 600; color: var(--accent-secondary);">$0.00 (0%)</span>
+                            </div>
+                            <div class="progress-bar-container" style="height: 8px;">
+                                <div id="bar-needs" class="progress-bar" style="background: var(--accent-secondary); width: 0%;"></div>
+                            </div>
+                        </div>
+                        <!-- 30% Wants -->
+                        <div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;">
+                                <span>Wants (30% Target - Entertainment, Shopping, Other)</span>
+                                <span id="txt-wants-actual" style="font-weight: 600; color: var(--accent-glow);">$0.00 (0%)</span>
+                            </div>
+                            <div class="progress-bar-container" style="height: 8px;">
+                                <div id="bar-wants" class="progress-bar" style="background: var(--accent-glow); width: 0%;"></div>
+                            </div>
+                        </div>
+                        <!-- 20% Savings -->
+                        <div>
+                            <div style="display: flex; justify-content: space-between; font-size: 0.85rem; margin-bottom: 4px;">
+                                <span>Savings (20% Target - Unspent Cash)</span>
+                                <span id="txt-savings-actual" style="font-weight: 600; color: var(--accent-success);">$0.00 (0%)</span>
+                            </div>
+                            <div class="progress-bar-container" style="height: 8px;">
+                                <div id="bar-savings" class="progress-bar" style="background: var(--accent-success); width: 0%;"></div>
+                            </div>
+                        </div>
+                        <!-- Projection -->
+                        <div style="border-top: 1px solid var(--border-glass); padding-top: 15px; margin-top: 5px;">
+                            <div style="display: flex; justify-content: space-between; align-items: center;">
+                                <div>
+                                    <div style="font-size: 0.8rem; color: var(--text-secondary);">Projected Month-End Spend</div>
+                                    <div style="font-family: var(--font-display); font-size: 1.3rem; font-weight: 700;" id="val-projection">$0.00</div>
+                                </div>
+                                <div id="txt-projection-status" style="font-size: 0.85rem; font-weight: 600; padding: 4px 8px; border-radius: 4px; background: rgba(255,255,255,0.05);">--</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings and Actions -->
+            <div class="analytics-grid">
+                <!-- Set budget card -->
+                <div class="chart-card glass-panel" style="min-height: 200px;">
+                    <div class="chart-title">Quick Settings</div>
+                    <div class="card-form" style="margin-top: 10px;">
+                        <h4 style="font-size: 0.9rem; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.5px;">Set Monthly Budget</h4>
+                        <form onsubmit="handleSetBudget(event)">
+                            <div class="form-group">
+                                <label for="budget-amount">Amount ($)</label>
+                                <input type="number" id="budget-amount" class="form-input" placeholder="e.g. 1500" min="1" step="any" required>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="budget-month">Month</label>
+                                    <select id="budget-month" class="form-input" style="background: rgba(15, 17, 35, 0.6);">
+                                        <option value="January">January</option>
+                                        <option value="February">February</option>
+                                        <option value="March">March</option>
+                                        <option value="April">April</option>
+                                        <option value="May">May</option>
+                                        <option value="June">June</option>
+                                        <option value="July">July</option>
+                                        <option value="August">August</option>
+                                        <option value="September">September</option>
+                                        <option value="October">October</option>
+                                        <option value="November">November</option>
+                                        <option value="December">December</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="budget-year">Year</label>
+                                    <input type="number" id="budget-year" class="form-input" value="2026" required>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-primary" style="padding: 10px; margin-top: 10px;">Save Budget</button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Add transaction card -->
+                <div class="chart-card glass-panel" style="min-height: 200px;">
+                    <div class="chart-title">Add Expense Shortcut</div>
+                    <button class="btn-primary" style="margin-top: 25px; padding: 18px;" onclick="openExpenseModal()">+ Add New Expense</button>
+                </div>
+            </div>
+
+            <!-- Details -->
+            <div class="details-grid">
+                <div class="section-card glass-panel">
+                    <div class="section-header">
+                        <div class="section-title">Recent Expenses</div>
+                        <div style="display: flex; gap: 10px;">
+                            <button class="btn-secondary" style="padding: 8px 16px; font-size: 0.9rem; display: flex; align-items: center; gap: 6px;" onclick="exportExpensesToCSV()">
+                                📤 Export CSV
+                            </button>
+                            <button class="btn-primary" style="padding: 8px 16px; font-size: 0.9rem;" onclick="openExpenseModal()">+ Add Expense</button>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table id="expenses-table">
+                            <thead>
+                                <tr>
+                                    <th>Title</th>
+                                    <th>Date</th>
+                                    <th>Category</th>
+                                    <th>Description</th>
+                                    <th>Amount</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="expenses-tbody"></tbody>
+                        </table>
+                        <div id="expenses-empty-state" class="empty-state" style="display: none;">
+                            <div class="empty-state-icon">💸</div>
+                            <p>No expenses logged yet. Click "+ Add Expense" to start tracking!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="section-card glass-panel" style="justify-content: flex-start; gap: 20px;">
+                    <div class="section-title">Category Spent Share</div>
+                    <div id="category-summary-list" style="display: flex; flex-direction: column; gap: 15px;"></div>
+                </div>
+            </div>
+
+            <!-- Savings and Investment Hub -->
+            <div class="section-card glass-panel" style="margin-top: 24px;">
+                <div class="section-title">Savings & Investment Hub</div>
+                
+                <div class="auth-tabs" style="margin-bottom: 20px;">
+                    <button class="auth-tab active" id="tab-savings-tips" onclick="switchHubTab('savings')">Saving Advice</button>
+                    <button class="auth-tab" id="tab-invest-where" onclick="switchHubTab('invest')">Where to Invest</button>
+                    <button class="auth-tab" id="tab-future-planner" onclick="switchHubTab('planner')">Future Investment Planner</button>
+                </div>
+
+                <!-- Saving Advice Panel -->
+                <div id="panel-savings-tips" class="hub-panel">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
+                        <div style="padding: 16px; border-radius: var(--radius-md); background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass);">
+                            <h4 style="color: var(--accent-secondary); margin-bottom: 8px;">1. Audit Subscriptions</h4>
+                            <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.4;">Scan your monthly recurring charges. Cancel anything you haven't used in the past 30 days.</p>
+                        </div>
+                        <div style="padding: 16px; border-radius: var(--radius-md); background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass);">
+                            <h4 style="color: var(--accent-secondary); margin-bottom: 8px;">2. The 72-Hour Rule</h4>
+                            <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.4;">Before making any non-essential purchase, wait 72 hours. This eliminates impulse shopping.</p>
+                        </div>
+                        <div style="padding: 16px; border-radius: var(--radius-md); background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass);">
+                            <h4 style="color: var(--accent-secondary); margin-bottom: 8px;">3. Reduce Utilities Cost</h4>
+                            <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.4;">Turn off background electronics, lower thermostat values by a few degrees, and check for draft leaks.</p>
+                        </div>
+                        <div style="padding: 16px; border-radius: var(--radius-md); background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass);">
+                            <h4 style="color: var(--accent-secondary); margin-bottom: 8px;">4. Cook & Dine at Home</h4>
+                            <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.4;">Reduce dining out. Meal planning once a week can save up to 40% on food expenses.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Where to Invest Panel -->
+                <div id="panel-invest-where" class="hub-panel" style="display: none;">
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 15px;">
+                        <div style="padding: 16px; border-radius: var(--radius-md); background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass);">
+                            <span class="badge" style="background: rgba(16, 185, 129, 0.15); color: #34d399; margin-bottom: 8px;">Low Risk</span>
+                            <h4 style="margin: 8px 0; font-family: var(--font-display);">High-Yield Savings & Bonds</h4>
+                            <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.4;">Keep emergency funds in High-Yield Savings Accounts (HYSAs) earning 4-5% APY, or Treasury bills with zero risk of capital loss.</p>
+                        </div>
+                        <div style="padding: 16px; border-radius: var(--radius-md); background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass);">
+                            <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; margin-bottom: 8px;">Medium Risk</span>
+                            <h4 style="margin: 8px 0; font-family: var(--font-display);">Index Funds & ETFs</h4>
+                            <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.4;">Invest saved cash in broad stock market index funds (like VOO or SPY). Historically yields ~10% annual returns over long terms.</p>
+                        </div>
+                        <div style="padding: 16px; border-radius: var(--radius-md); background: rgba(255,255,255,0.02); border: 1px solid var(--border-glass);">
+                            <span class="badge" style="background: rgba(239, 68, 68, 0.15); color: #f87171; margin-bottom: 8px;">High Risk</span>
+                            <h4 style="margin: 8px 0; font-family: var(--font-display);">Stocks & Cryptocurrencies</h4>
+                            <p style="font-size: 0.9rem; color: var(--text-secondary); line-height: 1.4;">High potential reward but high volatility. Dedicate no more than 5-10% of your portfolio to individual tech stocks or major crypto.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Compound Calculator Panel -->
+                <div id="panel-future-planner" class="hub-panel" style="display: none;">
+                    <div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                            <div class="form-group">
+                                <label for="plan-deposit">Monthly Deposit ($)</label>
+                                <input type="number" id="plan-deposit" class="form-input" value="100" min="1" oninput="calculateFutureValue()">
+                            </div>
+                            <div class="form-group">
+                                <label for="plan-rate">Expected Annual Return (%)</label>
+                                <input type="number" id="plan-rate" class="form-input" value="8" min="0.1" max="100" step="any" oninput="calculateFutureValue()">
+                            </div>
+                            <div class="form-group">
+                                <label for="plan-years">Time Horizon (Years)</label>
+                                <input type="number" id="plan-years" class="form-input" value="10" min="1" max="50" oninput="calculateFutureValue()">
+                            </div>
+                        </div>
+                        <div style="padding: 20px; border-radius: var(--radius-md); background: rgba(139, 92, 246, 0.05); border: 1px solid rgba(139, 92, 246, 0.2); display: flex; flex-direction: column; gap: 10px;">
+                            <h4 style="color: var(--accent-glow); font-family: var(--font-display); font-size: 1.1rem;">Future Savings Simulation Results</h4>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-top: 5px;">
+                                <div>
+                                    <div style="font-size: 0.8rem; color: var(--text-secondary);">Total Value after <span id="lbl-plan-years">10</span> years</div>
+                                    <div style="font-family: var(--font-display); font-size: 1.8rem; font-weight: 700; color: var(--accent-success);" id="val-plan-future">$0.00</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.8rem; color: var(--text-secondary);">Your Total Contributions</div>
+                                    <div style="font-family: var(--font-display); font-size: 1.3rem; font-weight: 600;" id="val-plan-invested">$0.00</div>
+                                </div>
+                                <div>
+                                    <div style="font-size: 0.8rem; color: var(--text-secondary);">Interest / Growth Earned</div>
+                                    <div style="font-family: var(--font-display); font-size: 1.3rem; font-weight: 600; color: var(--accent-secondary);" id="val-plan-interest">$0.00</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal -->
+    <div id="expense-modal" class="modal">
+        <div class="modal-content glass-panel">
+            <button class="modal-close" onclick="closeExpenseModal()">&times;</button>
+            <h3 class="section-title" style="margin-bottom: 20px;">Add New Expense</h3>
+            <form onsubmit="handleAddExpense(event)">
+                <div class="form-group">
+                    <label for="exp-title">Title</label>
+                    <input type="text" id="exp-title" class="form-input" placeholder="e.g. Walmart Groceries" required>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="exp-amount">Amount ($)</label>
+                        <input type="number" id="exp-amount" class="form-input" placeholder="e.g. 45.50" min="0.01" step="any" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="exp-category">Category</label>
+                        <select id="exp-category" class="form-input" style="background: rgba(15, 17, 35, 0.6);" required>
+                            <option value="Food">Food</option>
+                            <option value="Rent">Rent</option>
+                            <option value="Utilities">Utilities</option>
+                            <option value="Entertainment">Entertainment</option>
+                            <option value="Transport">Transport</option>
+                            <option value="Shopping">Shopping</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="exp-date">Date</label>
+                        <input type="date" id="exp-date" class="form-input" required>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="exp-desc">Description (Optional)</label>
+                    <textarea id="exp-desc" class="form-input" rows="3" placeholder="Additional details..."></textarea>
+                </div>
+                <button type="submit" class="btn-primary" style="margin-top: 10px;">Add Transaction</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="toast-notification" class="toast">
+        <span id="toast-message"></span>
+    </div>
+
+    <script>
+        const API_BASE = window.location.protocol === 'file:' ? 'http://127.0.0.1:8000' : '';
+        let token = localStorage.getItem('token') || '';
+        let userData = JSON.parse(localStorage.getItem('userData') || '{}');
+        let categoryChart = null;
+        let currentExpenses = []; // Global store
+
+        const monthNames = ["January", "February", "March", "April", "May", "June",
+          "July", "August", "September", "October", "November", "December"
+        ];
+        const currentDate = new Date();
+        document.getElementById('budget-month').value = monthNames[currentDate.getMonth()];
+        document.getElementById('budget-year').value = currentDate.getFullYear();
+        document.getElementById('exp-date').valueAsDate = currentDate;
+
+        if (token) {
+            showDashboard();
+        } else {
+            showAuth();
+        }
+
+        function showAuth() {
+            document.getElementById('auth-screen').style.display = 'flex';
+            document.getElementById('dashboard-screen').style.display = 'none';
+        }
+
+        function showDashboard() {
+            document.getElementById('auth-screen').style.display = 'none';
+            document.getElementById('dashboard-screen').style.display = 'flex';
+            
+            document.getElementById('user-display-name').textContent = userData.username || 'User';
+            document.getElementById('user-display-email').textContent = userData.email || '';
+            
+            fetchDashboardData();
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast-notification');
+            const toastMsg = document.getElementById('toast-message');
+            
+            toast.className = `toast toast-${type}`;
+            toastMsg.textContent = message;
+            
+            toast.classList.add('show');
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        function switchAuthTab(tab) {
+            const tabs = document.querySelectorAll('.auth-tab');
+            tabs.forEach(t => t.classList.remove('active'));
+            
+            const forms = document.querySelectorAll('.auth-form');
+            forms.forEach(f => f.style.display = 'none');
+            
+            document.getElementById('auth-message').style.display = 'none';
+
+            if (tab === 'login') {
+                tabs[0].classList.add('active');
+                document.getElementById('login-form').style.display = 'block';
+            } else {
+                tabs[1].classList.add('active');
+                document.getElementById('register-form').style.display = 'block';
+            }
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const messageEl = document.getElementById('auth-message');
+            
+            messageEl.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/users/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Login failed');
+                }
+
+                token = data.access_token;
+                localStorage.setItem('token', token);
+
+                userData = { username: email.split('@')[0], email };
+                localStorage.setItem('userData', JSON.stringify(userData));
+
+                showToast("Welcome back!", "success");
+                showDashboard();
+            } catch (err) {
+                messageEl.className = 'auth-message message-danger';
+                messageEl.textContent = err.message;
+                messageEl.style.display = 'block';
+            }
+        }
+
+        async function handleRegister(e) {
+            e.preventDefault();
+            const username = document.getElementById('reg-username').value;
+            const email = document.getElementById('reg-email').value;
+            const password = document.getElementById('reg-password').value;
+            const messageEl = document.getElementById('auth-message');
+            
+            messageEl.style.display = 'none';
+
+            try {
+                const response = await fetch(`${API_BASE}/users/register`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, email, password })
+                });
+
+                const data = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(data.detail || 'Registration failed');
+                }
+
+                messageEl.className = 'auth-message message-success';
+                messageEl.textContent = "Account created! Logging in...";
+                messageEl.style.display = 'block';
+
+                // Automatically login
+                const loginResponse = await fetch(`${API_BASE}/users/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                const loginData = await loginResponse.json();
+
+                if (!loginResponse.ok) {
+                    throw new Error(loginData.detail || 'Auto-login failed');
+                }
+
+                token = loginData.access_token;
+                localStorage.setItem('token', token);
+
+                userData = { username, email };
+                localStorage.setItem('userData', JSON.stringify(userData));
+
+                setTimeout(() => {
+                    showToast("Registered and signed in!", "success");
+                    showDashboard();
+                }, 1000);
+
+            } catch (err) {
+                messageEl.className = 'auth-message message-danger';
+                messageEl.textContent = err.message;
+                messageEl.style.display = 'block';
+            }
+        }
+
+        function handleLogout() {
+            token = '';
+            userData = {};
+            localStorage.removeItem('token');
+            localStorage.removeItem('userData');
+            showToast("Logged out successfully");
+            showAuth();
+        }
+
+        async function apiFetch(endpoint, options = {}) {
+            options.headers = options.headers || {};
+            options.headers['Authorization'] = `Bearer ${token}`;
+            options.headers['Content-Type'] = 'application/json';
+
+            const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
+            const response = await fetch(url, options);
+            if (response.status === 401) {
+                handleLogout();
+                throw new Error("Session expired, please sign in.");
+            }
+            return response;
+        }
+
+        async function fetchDashboardData() {
+            try {
+                const summaryRes = await apiFetch('/budgets/dashboard');
+                const summary = await summaryRes.json();
+                
+                const budgetsRes = await apiFetch('/budgets/');
+                const budgets = await budgetsRes.json();
+                if (budgets && budgets.length > 0) {
+                    const latest = budgets[budgets.length - 1];
+                    document.getElementById('budget-amount').value = latest.amount;
+                }
+
+                document.getElementById('val-budget').textContent = `$${summary.total_budget.toFixed(2)}`;
+                document.getElementById('val-spent').textContent = `$${summary.total_spent.toFixed(2)}`;
+                document.getElementById('val-remaining').textContent = `$${summary.remaining_budget.toFixed(2)}`;
+                document.getElementById('val-count').textContent = summary.total_expenses;
+
+                const remainingProgress = document.getElementById('progress-remaining');
+                const percentLabel = document.getElementById('label-remaining-percent');
+                
+                let percentLeft = 0;
+                if (summary.total_budget > 0) {
+                    percentLeft = (summary.remaining_budget / summary.total_budget) * 100;
+                }
+                
+                percentLeft = Math.max(0, Math.min(100, percentLeft));
+                percentLabel.textContent = `${percentLeft.toFixed(0)}% Left`;
+                remainingProgress.style.width = `${percentLeft}%`;
+                
+                if (percentLeft < 15) {
+                    remainingProgress.style.background = 'var(--accent-danger)';
+                    document.querySelector('.card-remaining').style.boxShadow = '0 8px 32px 0 rgba(239, 68, 68, 0.15)';
+                } else if (percentLeft < 40) {
+                    remainingProgress.style.background = 'var(--accent-warning)';
+                    document.querySelector('.card-remaining').style.boxShadow = '0 8px 32px 0 rgba(245, 158, 11, 0.15)';
+                } else {
+                    remainingProgress.style.background = 'var(--accent-success)';
+                    document.querySelector('.card-remaining').style.boxShadow = '';
+                }
+
+                const reportRes = await apiFetch('/expenses/report/category');
+                const report = await reportRes.json();
+
+                renderCategoryShareList(report, summary.total_spent);
+                renderCategoryChart(report);
+
+                const expensesRes = await apiFetch('/expenses/');
+                const expenses = await expensesRes.json();
+                renderExpensesTable(expenses);
+
+                calculateFinancialMetrics(summary, expenses);
+
+            } catch (err) {
+                showToast(err.message, "error");
+            }
+        }
+
+        function calculateFinancialMetrics(summary, expenses) {
+            currentExpenses = expenses; 
+
+            const totalBudget = summary.total_budget || 0;
+            const totalSpent = summary.total_spent || 0;
+            const remaining = summary.remaining_budget || 0;
+
+            let needs = 0;
+            let wants = 0;
+
+            const needsCategories = ['food', 'rent', 'utilities', 'transport'];
+            expenses.forEach(exp => {
+                const category = (exp.category || '').toLowerCase().trim();
+                if (needsCategories.includes(category)) {
+                    needs += exp.amount;
+                } else {
+                    wants += exp.amount;
+                }
+            });
+
+            document.getElementById('txt-needs-actual').textContent = `$${needs.toFixed(2)} (${totalBudget > 0 ? ((needs/totalBudget)*100).toFixed(0) : 0}%)`;
+            document.getElementById('txt-wants-actual').textContent = `$${wants.toFixed(2)} (${totalBudget > 0 ? ((wants/totalBudget)*100).toFixed(0) : 0}%)`;
+            document.getElementById('txt-savings-actual').textContent = `$${remaining.toFixed(2)} (${totalBudget > 0 ? ((remaining/totalBudget)*100).toFixed(0) : 0}%)`;
+
+            const needsPercent = totalBudget > 0 ? Math.min(100, (needs / totalBudget) * 100) : 0;
+            const wantsPercent = totalBudget > 0 ? Math.min(100, (wants / totalBudget) * 100) : 0;
+            const savingsPercent = totalBudget > 0 ? Math.max(0, Math.min(100, (remaining / totalBudget) * 100)) : 0;
+
+            document.getElementById('bar-needs').style.width = `${needsPercent}%`;
+            document.getElementById('bar-wants').style.width = `${wantsPercent}%`;
+            document.getElementById('bar-savings').style.width = `${savingsPercent}%`;
+
+            let score = 100;
+            let scoreDesc = "";
+            let scoreStatus = "In Control";
+
+            if (totalBudget === 0) {
+                score = 100;
+                scoreDesc = "Set a monthly budget to calculate your score.";
+                scoreStatus = "In Control";
+            } else {
+                const percentSpent = (totalSpent / totalBudget) * 100;
+                
+                if (percentSpent > 100) {
+                    score = Math.max(10, 100 - (percentSpent - 100) * 1.5);
+                    scoreStatus = "Wasting Money";
+                    scoreDesc = `Critical! You are over budget by $${(totalSpent - totalBudget).toFixed(2)}. Cut non-essential wants.`;
+                } else if (percentSpent > 80) {
+                    score = 100 - (percentSpent * 0.5); 
+                    scoreStatus = "Warning Zone";
+                    scoreDesc = "Caution! You spent over 80% of your budget. Review your subscription fees.";
+                } else if (percentSpent > 50) {
+                    score = 100 - (percentSpent * 0.3); 
+                    scoreStatus = "Healthy";
+                    scoreDesc = "Good job! Expenses are in control. Keep savings growing in HYSAs!";
+                } else {
+                    score = 100 - (percentSpent * 0.15); 
+                    scoreStatus = "Elite Saver";
+                    scoreDesc = "Fantastic! Saved over half of your budget. Ready to invest in ETFs!";
+                }
+            }
+
+            document.getElementById('val-score').textContent = `${score.toFixed(0)}/100`;
+            
+            const statusBadge = document.getElementById('label-score-status');
+            statusBadge.textContent = scoreStatus;
+            document.getElementById('val-score-desc').textContent = scoreDesc;
+
+            if (scoreStatus === "Elite Saver") {
+                statusBadge.style.background = 'rgba(16, 185, 129, 0.15)';
+                statusBadge.style.color = '#34d399';
+                statusBadge.style.border = '1px solid rgba(16, 185, 129, 0.3)';
+            } else if (scoreStatus === "Healthy" || scoreStatus === "In Control") {
+                statusBadge.style.background = 'rgba(6, 182, 212, 0.15)';
+                statusBadge.style.color = '#22d3ee';
+                statusBadge.style.border = '1px solid rgba(6, 182, 212, 0.3)';
+            } else if (scoreStatus === "Warning Zone") {
+                statusBadge.style.background = 'rgba(245, 158, 11, 0.15)';
+                statusBadge.style.color = '#fbbf24';
+                statusBadge.style.border = '1px solid rgba(245, 158, 11, 0.3)';
+            } else {
+                statusBadge.style.background = 'rgba(239, 68, 68, 0.15)';
+                statusBadge.style.color = '#f87171';
+                statusBadge.style.border = '1px solid rgba(239, 68, 68, 0.3)';
+            }
+
+            const currentDay = currentDate.getDate();
+            const totalDaysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
+            
+            const dailyVelocity = totalSpent / Math.max(1, currentDay);
+            const projectedSpend = dailyVelocity * totalDaysInMonth;
+
+            document.getElementById('val-projection').textContent = `$${projectedSpend.toFixed(2)}`;
+            
+            const projStatusEl = document.getElementById('txt-projection-status');
+            if (totalBudget > 0) {
+                if (projectedSpend > totalBudget) {
+                    projStatusEl.textContent = "Trending Over Budget!";
+                    projStatusEl.style.color = 'var(--accent-danger)';
+                    projStatusEl.style.background = 'rgba(239, 68, 68, 0.1)';
+                } else {
+                    projStatusEl.textContent = "Trending Under Budget";
+                    projStatusEl.style.color = 'var(--accent-success)';
+                    projStatusEl.style.background = 'rgba(16, 185, 129, 0.1)';
+                }
+            } else {
+                projStatusEl.textContent = "No Budget Set";
+                projStatusEl.style.color = 'var(--text-secondary)';
+                projStatusEl.style.background = 'rgba(255,255,255,0.05)';
+            }
+        }
+
+        function exportExpensesToCSV() {
+            if (!currentExpenses || currentExpenses.length === 0) {
+                showToast("No expenses to export", "error");
+                return;
+            }
+
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += "Title,Date,Category,Description,Amount\n";
+
+            currentExpenses.forEach(exp => {
+                const title = `"${exp.title.replace(/"/g, '""')}"`;
+                const desc = `"${(exp.description || '').replace(/"/g, '""')}"`;
+                csvContent += `${title},${exp.expense_date},${exp.category},${desc},${exp.amount}\n`;
+            });
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `expenses_report_${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link); 
+            link.click();
+            document.body.removeChild(link);
+            showToast("CSV report downloaded successfully!");
+        }
+
+        function switchHubTab(tab) {
+            document.getElementById('tab-savings-tips').classList.remove('active');
+            document.getElementById('tab-invest-where').classList.remove('active');
+            document.getElementById('tab-future-planner').classList.remove('active');
+
+            document.getElementById('panel-savings-tips').style.display = 'none';
+            document.getElementById('panel-invest-where').style.display = 'none';
+            document.getElementById('panel-future-planner').style.display = 'none';
+
+            if (tab === 'savings') {
+                document.getElementById('tab-savings-tips').classList.add('active');
+                document.getElementById('panel-savings-tips').style.display = 'block';
+            } else if (tab === 'invest') {
+                document.getElementById('tab-invest-where').classList.add('active');
+                document.getElementById('panel-invest-where').style.display = 'block';
+            } else if (tab === 'planner') {
+                document.getElementById('tab-future-planner').classList.add('active');
+                document.getElementById('panel-future-planner').style.display = 'block';
+                calculateFutureValue();
+            }
+        }
+
+        function calculateFutureValue() {
+            const deposit = parseFloat(document.getElementById('plan-deposit').value) || 0;
+            const annualRate = parseFloat(document.getElementById('plan-rate').value) || 0;
+            const years = parseFloat(document.getElementById('plan-years').value) || 0;
+
+            document.getElementById('lbl-plan-years').textContent = years;
+
+            const r = (annualRate / 100) / 12;
+            const n = years * 12;
+
+            let futureValue = 0;
+            if (r > 0) {
+                futureValue = deposit * ((Math.pow(1 + r, n) - 1) / r) * (1 + r);
+            } else {
+                futureValue = deposit * n;
+            }
+
+            const totalInvested = deposit * n;
+            const interestEarned = Math.max(0, futureValue - totalInvested);
+
+            document.getElementById('val-plan-future').textContent = `$${futureValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('val-plan-invested').textContent = `$${totalInvested.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+            document.getElementById('val-plan-interest').textContent = `$${interestEarned.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+        }
+
+        function renderCategoryShareList(report, totalSpent) {
+            const listContainer = document.getElementById('category-summary-list');
+            listContainer.innerHTML = '';
+
+            if (!report || report.length === 0) {
+                listContainer.innerHTML = '<div style="color: var(--text-secondary); text-align: center; padding: 20px 0;">No spending data.</div>';
+                return;
+            }
+
+            const sortedReport = [...report].sort((a, b) => b.total_spent - a.total_spent);
+
+            sortedReport.forEach(item => {
+                const percent = totalSpent > 0 ? (item.total_spent / totalSpent) * 100 : 0;
+                
+                const itemHtml = `
+                    <div style="display: flex; flex-direction: column; gap: 6px;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                            <span style="font-weight: 500;">${item.category}</span>
+                            <span style="color: var(--text-secondary);">$${item.total_spent.toFixed(2)} (${percent.toFixed(0)}%)</span>
+                        </div>
+                        <div style="background: rgba(255,255,255,0.05); height: 4px; border-radius: 2px; overflow: hidden; width: 100%;">
+                            <div style="width: ${percent}%; height: 100%; background: var(--accent-glow);"></div>
+                        </div>
+                    </div>
+                `;
+                listContainer.insertAdjacentHTML('beforeend', itemHtml);
+            });
+        }
+
+        function renderCategoryChart(report) {
+            const ctx = document.getElementById('categoryChart').getContext('2d');
+            
+            if (categoryChart) {
+                categoryChart.destroy();
+            }
+
+            if (!report || report.length === 0) {
+                ctx.clearRect(0, 0, 300, 300);
+                return;
+            }
+
+            const labels = report.map(item => item.category);
+            const data = report.map(item => item.total_spent);
+            
+            categoryChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: [
+                            'rgba(139, 92, 246, 0.7)',
+                            'rgba(6, 182, 212, 0.7)',
+                            'rgba(16, 185, 129, 0.7)',
+                            'rgba(245, 158, 11, 0.7)',
+                            'rgba(239, 68, 68, 0.7)',
+                            'rgba(236, 72, 153, 0.7)',
+                            'rgba(100, 116, 139, 0.7)'
+                        ],
+                        borderColor: 'rgba(22, 25, 49, 1)',
+                        borderWidth: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                color: '#f8fafc',
+                                font: {
+                                    family: 'Inter',
+                                    size: 11
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderExpensesTable(expenses) {
+            const tbody = document.getElementById('expenses-tbody');
+            const emptyState = document.getElementById('expenses-empty-state');
+            tbody.innerHTML = '';
+
+            if (!expenses || expenses.length === 0) {
+                emptyState.style.display = 'block';
+                document.getElementById('expenses-table').style.display = 'none';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            document.getElementById('expenses-table').style.display = 'table';
+
+            const sortedExpenses = [...expenses].sort((a, b) => new Date(b.expense_date) - new Date(a.expense_date));
+
+            sortedExpenses.forEach(exp => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td style="font-weight: 500;">${exp.title}</td>
+                    <td style="color: var(--text-secondary); font-size: 0.85rem;">${exp.expense_date}</td>
+                    <td><span class="badge badge-category">${exp.category}</span></td>
+                    <td style="color: var(--text-secondary); font-size: 0.85rem; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${exp.description || '-'}</td>
+                    <td style="font-weight: 600;">$${exp.amount.toFixed(2)}</td>
+                    <td>
+                        <button class="btn-delete" onclick="handleDeleteExpense(${exp.id})">Delete</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function handleSetBudget(e) {
+            e.preventDefault();
+            const amount = parseFloat(document.getElementById('budget-amount').value);
+            const month = document.getElementById('budget-month').value;
+            const year = parseInt(document.getElementById('budget-year').value);
+
+            try {
+                const res = await apiFetch('/budgets/', {
+                    method: 'POST',
+                    body: JSON.stringify({ month, year, amount })
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json();
+                    throw new Error(errData.detail || "Failed to set budget");
+                }
+
+                showToast("Budget updated successfully!");
+                fetchDashboardData();
+            } catch (err) {
+                showToast(err.message, "error");
+            }
+        }
+
+        function openExpenseModal() {
+            document.getElementById('expense-modal').style.display = 'flex';
+        }
+
+        function closeExpenseModal() {
+            document.getElementById('expense-modal').style.display = 'none';
+        }
+
+        async function handleAddExpense(e) {
+            e.preventDefault();
+            const title = document.getElementById('exp-title').value;
+            const amount = parseFloat(document.getElementById('exp-amount').value);
+            const category = document.getElementById('exp-category').value;
+            const expense_date = document.getElementById('exp-date').value;
+            const description = document.getElementById('exp-desc').value;
+
+            try {
+                const res = await apiFetch('/expenses/', {
+                    method: 'POST',
+                    body: JSON.stringify({ title, amount, category, expense_date, description })
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json();
+                    throw new Error(errData.detail || "Failed to add expense");
+                }
+
+                showToast("Expense logged successfully!");
+                closeExpenseModal();
+                
+                document.getElementById('exp-title').value = '';
+                document.getElementById('exp-amount').value = '';
+                document.getElementById('exp-desc').value = '';
+                document.getElementById('exp-date').valueAsDate = currentDate;
+
+                fetchDashboardData();
+            } catch (err) {
+                showToast(err.message, "error");
+            }
+        }
+
+        async function handleDeleteExpense(id) {
+            if (!confirm("Are you sure you want to delete this expense?")) return;
+
+            try {
+                const res = await apiFetch(`/expenses/${id}`, {
+                    method: 'DELETE'
+                });
+
+                if (!res.ok) {
+                    const errData = await res.json();
+                    throw new Error(errData.detail || "Failed to delete expense");
+                }
+
+                showToast("Expense deleted successfully.");
+                fetchDashboardData();
+            } catch (err) {
+                showToast(err.message, "error");
+            }
+        }
+    </script>
+</body>
+</html>
